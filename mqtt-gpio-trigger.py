@@ -102,7 +102,7 @@ def main_loop():
 		for pin in pins:
 			state[pin] = call(["gpio", "-g read " + pin ])
 	        	if state[pin] != oldstate[pin]:
-        			mqttc.publish(MQTT_TOPIC, state[pin])
+        			mqttc.publish("/raw/" + socket.getfqdn() + "/gpio/" + pin, state[pin])
         			oldstate[pin] = state[pin]
 
 # Use the signal module to handle signals
