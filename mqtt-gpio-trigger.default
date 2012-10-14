@@ -1,2 +1,3 @@
 START_DAEMON=true
 VERBOSE=true
+PINS=17,22
