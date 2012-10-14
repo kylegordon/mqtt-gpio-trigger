@@ -1,7 +1,7 @@
 [global]
 DEBUG = False
 LOGFILE = /var/log/mqtt-gpio-trigger.log
-PINS = 17 22
+PINS = 17, 22
 MQTT_HOST = 10.8.0.1
 MQTT_PORT = 1883
 MQTT_TOPIC = /raw/#
