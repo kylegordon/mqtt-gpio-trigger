@@ -1,0 +1,16 @@
+SUMMARY
+=======
+
+This script will parse a list of pins to be monitored from /etc/mqtt-gpio-trigger/ and publish MQTT message whenever they change state. This particular incantation of it will use the WiringPi library from https://projects.drogon.net/raspberry-pi/wiringpi/ to monitor inputs on a Raspberry Pi
+
+INSTALL
+=======
+
+mkdir /usr/local/mqtt-gpio-trigger/ /etc/mqtt-gpio-trigger/
+cd /usr/local/
+git clone git://github.com/kylegordon/mqtt-gpio-trigger.git
+cp mqtt-gpio-trigger.cfg.example /etc/mqtt-gpio-trigger/mqtt-gpio-trigger.cfg
+cp mqtt-gpio-trigger.init /etc/init.d/mqtt-gpio-trigger
+update-rc.d mqtt-gpio-trigger defaults
+cp mqtt-gpio-trigger.default /etc/default/mqtt-gpio-trigger
+/etc/init.d/mqtt-gpio-trigger start
