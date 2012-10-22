@@ -14,6 +14,7 @@ import socket
 
 import mosquitto
 import ConfigParser
+import subprocess
 
 # Read the config file
 config = ConfigParser.RawConfigParser()
@@ -26,6 +27,14 @@ MQTT_HOST = config.get("global", "mqtt_host")
 MQTT_PORT = config.getint("global", "mqtt_port")
 MQTT_TOPIC = config.get("global", "mqtt_topic")
 PINS = config.get("global", "pins").split(",")
+
+# Convert the list of strings to a list of ints. Also strips any whitespace padding
+PINS = map(int, PINS)
+
+# Append a column to the list of PINS. This will be used to store state
+## FIXME Should this not be in the (re)connect routine?
+for item in PINS:
+  PINS[PINS.index(item)] = [item,1]
 
 client_id = "GPIO_Trigger_%d" % os.getpid()
 mqttc = mosquitto.Mosquitto(client_id)
@@ -98,12 +107,17 @@ def main_loop():
         The main loop in which we stay connected to the broker
         """
         while mqttc.loop() == 0:
-                logging.debug("Looping")
-		for pin in pins:
-			state[pin] = call(["gpio", "-g read " + pin ])
-	        	if state[pin] != oldstate[pin]:
-        			mqttc.publish("/raw/" + socket.getfqdn() + "/gpio/" + pin, state[pin])
-        			oldstate[pin] = state[pin]
+		for PIN in PINS:
+			index = [y[0] for y in PINS].index(PIN[0])
+			logging.debug("Reading state of %s from %s", str(PINS[index][0]), str(PINS))
+			state = subprocess.check_output("/usr/local/bin/gpio -g read " + str(PINS[index][0]), shell=True)
+			# FIXME - check this output
+			state = int(state)
+			logging.debug("Read state is %s and stored state is %s", str(state), str(PINS[index][1]))
+	        	if state != PINS[index][1]:
+				logging.debug("Publishing state change. Pin %s changed from %s to %s", str(PINS[index][0]), str(PINS[index][1]), str(state))
+                                PINS[index][1] = state
+        			mqttc.publish("/raw/" + socket.getfqdn() + "/gpio/" + str(PINS[index][0]), str(state))
 
 # Use the signal module to handle signals
 signal.signal(signal.SIGTERM, cleanup)
@@ -111,5 +125,4 @@ signal.signal(signal.SIGINT, cleanup)
 
 #connect to broker
 connect()
-
 main_loop()
