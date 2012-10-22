@@ -118,6 +118,7 @@ def main_loop():
 				logging.debug("Publishing state change. Pin %s changed from %s to %s", str(PINS[index][0]), str(PINS[index][1]), str(state))
                                 PINS[index][1] = state
         			mqttc.publish("/raw/" + socket.getfqdn() + "/gpio/" + str(PINS[index][0]), str(state))
+			time.sleep(1)
 
 # Use the signal module to handle signals
 signal.signal(signal.SIGTERM, cleanup)
