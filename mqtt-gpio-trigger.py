@@ -103,22 +103,22 @@ def on_message(msg):
     logging.debug("Received: %s", msg.topic)
 
 def main_loop():
-        """
-        The main loop in which we stay connected to the broker
-        """
-        while mqttc.loop() == 0:
-		for PIN in PINS:
-			index = [y[0] for y in PINS].index(PIN[0])
-			logging.debug("Reading state of %s from %s", str(PINS[index][0]), str(PINS))
-			state = subprocess.check_output("/usr/local/bin/gpio -g read " + str(PINS[index][0]), shell=True)
-			# FIXME - check this output
-			state = int(state)
-			logging.debug("Read state is %s and stored state is %s", str(state), str(PINS[index][1]))
-	        	if state != PINS[index][1]:
-				logging.debug("Publishing state change. Pin %s changed from %s to %s", str(PINS[index][0]), str(PINS[index][1]), str(state))
-                                PINS[index][1] = state
-        			mqttc.publish("/raw/" + socket.getfqdn() + "/gpio/" + str(PINS[index][0]), str(state))
-			time.sleep(1)
+    """
+    The main loop in which we stay connected to the broker
+    """
+    while mqttc.loop() == 0:
+        for PIN in PINS:
+            index = [y[0] for y in PINS].index(PIN[0])
+            logging.debug("Reading state of %s from %s", str(PINS[index][0]), str(PINS))
+            state = subprocess.check_output("/usr/local/bin/gpio -g read " + str(PINS[index][0]), shell=True)
+            # FIXME - check this output
+            state = int(state)
+            logging.debug("Read state is %s and stored state is %s", str(state), str(PINS[index][1]))
+            if state != PINS[index][1]:
+                    logging.debug("Publishing state change. Pin %s changed from %s to %s", str(PINS[index][0]), str(PINS[index][1]), str(state))
+                    PINS[index][1] = state
+                    mqttc.publish("/raw/" + socket.getfqdn() + "/gpio/" + str(PINS[index][0]), str(state))
+            time.sleep(1)
 
 # Use the signal module to handle signals
 signal.signal(signal.SIGTERM, cleanup)
