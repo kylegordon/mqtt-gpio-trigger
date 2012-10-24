@@ -11,10 +11,14 @@ import logging
 import signal
 import time
 import socket
+import sys
 
 import mosquitto
 import ConfigParser
 import subprocess
+
+# Location of WirinPi gpio command
+gpio_bin_location = "/usr/local/bin/gpio"
 
 # Read the config file
 config = ConfigParser.RawConfigParser()
@@ -102,6 +106,19 @@ def on_message(msg):
     """
     logging.debug("Received: %s", msg.topic)
 
+def export_pi_gpio():
+    """
+    If we're running on a Raspberry Pi, export all the pins using WiringPi
+    """
+    for PIN in PINS:
+        index = [y[0] for y in PINS].index(PIN[0])
+        logging.debug("Exporting pin %s", str(PINS[index][0]))
+        result = subprocess.call("/usr/local/bin/gpio export " + str(PINS[index][0]) + " in", shell=True)
+        if result != 0:
+            logging.info("Failed to export pin %s", str(PINS[index][0]))
+            sys.exit(result)
+        
+
 def main_loop():
     """
     The main loop in which we stay connected to the broker
@@ -125,6 +142,10 @@ def main_loop():
 # Use the signal module to handle signals
 signal.signal(signal.SIGTERM, cleanup)
 signal.signal(signal.SIGINT, cleanup)
+
+if os.path.exists(gpio_bin_location):
+    logging.info("WiringPi GPIO detected. Assumed running on a Raspberry Pi")
+    export_pi_gpio()
 
 #connect to broker
 connect()
