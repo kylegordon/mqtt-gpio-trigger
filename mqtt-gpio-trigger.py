@@ -6,7 +6,6 @@ __author__ = "Kyle Gordon"
 __copyright__ = "Copyright (C) Kyle Gordon"
 
 import os
-import csv
 import logging
 import signal
 import time
