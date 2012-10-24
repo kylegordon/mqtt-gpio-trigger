@@ -1,11 +1,8 @@
 SUMMARY
 =======
 
-This script will parse a list of pins to be monitored from /etc/mqtt-gpio-trigger/ and publish MQTT message whenever they change state. This particular incantation of it uses the WiringPi library from https://projects.drogon.net/raspberry-pi/wiringpi/ to monitor inputs on a Raspberry Pi.
-
-WARNING
-=======
-As above, it uses the WiringPi library, especially the gpio command. Next version will use exported GPIO pins and be platform agnostic (theoretically)
+This script will parse a list of pins to be monitored from /etc/mqtt-gpio-trigger/ and publish MQTT message whenever they change state. 
+If it's run on a Raspberry Pi, you will need the WiringPi library from https://projects.drogon.net/raspberry-pi/wiringpi/ as the gpio command is used to export the pins to the sysfs interface.
 
 INSTALL
 =======
