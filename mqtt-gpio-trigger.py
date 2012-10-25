@@ -116,7 +116,18 @@ def export_pi_gpio():
         if result != 0:
             logging.info("Failed to export pin %s", str(PINS[index][0]))
             sys.exit(result)
-        
+
+def set_direction():
+    """
+    Set the GPIO direction so that it's classed as an input
+    """
+    for PIN in PINS:
+        index = [y[0] for y in PINS].index(PIN[0])
+        logging.debug("Setting direction of pin %s", str(PINS[index][0]))
+        result = subprocess.call("echo out > /sys/class/gpio/gpio" + str(PINS[index][0]) + "/direction", shell=True)
+        if result != 0:
+            logging.info("Failed to set the direction of pin %s", str(PINS[index][0]))
+            sys.exit(result)
 
 def main_loop():
     """
@@ -145,6 +156,8 @@ signal.signal(signal.SIGINT, cleanup)
 if os.path.exists(gpio_bin_location):
     logging.info("WiringPi GPIO detected. Assumed running on a Raspberry Pi")
     export_pi_gpio()
+else:
+    set_direction()
 
 #connect to broker
 connect()
