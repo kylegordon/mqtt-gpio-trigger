@@ -42,10 +42,12 @@ for item in PINS:
 client_id = "GPIO_Trigger_%d" % os.getpid()
 mqttc = mosquitto.Mosquitto(client_id)
 
+LOGFORMAT = '%(asctime)-15s %(message)s'
+
 if DEBUG:
-    logging.basicConfig(filename=LOGFILE, level=logging.DEBUG)
+    logging.basicConfig(filename=LOGFILE, level=logging.DEBUG, format=LOGFORMAT)
 else:
-    logging.basicConfig(filename=LOGFILE, level=logging.INFO)
+    logging.basicConfig(filename=LOGFILE, level=logging.INFO, format=LOGFORMAT)
 
 logging.info("Starting mqtt-gpio-trigger")
 logging.info("INFO MODE")
