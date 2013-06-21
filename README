@@ -7,11 +7,12 @@ If it's run on a Raspberry Pi, you will need the WiringPi library from https://p
 INSTALL
 =======
 
-mkdir /usr/local/mqtt-gpio-trigger/ /etc/mqtt-gpio-trigger/
-cd /usr/local/
-git clone git://github.com/kylegordon/mqtt-gpio-trigger.git
-cp mqtt-gpio-trigger.cfg.example /etc/mqtt-gpio-trigger/mqtt-gpio-trigger.cfg
-cp mqtt-gpio-trigger.init /etc/init.d/mqtt-gpio-trigger
+sudo apt-get install python-mosquitto git
+mkdir /etc/mqtt-gpio-trigger/
+git clone git://github.com/kylegordon/mqtt-gpio-trigger.git /usr/local/mqtt-gpio-trigger/
+cp /usr/local/mqtt-gpio-trigger/mqtt-gpio-trigger.cfg.example /etc/mqtt-gpio-trigger/mqtt-gpio-trigger.cfg
+cp /usr/local/mqtt-gpio-trigger/mqtt-gpio-trigger.init /etc/init.d/mqtt-gpio-trigger
 update-rc.d mqtt-gpio-trigger defaults
-cp mqtt-gpio-trigger.default /etc/default/mqtt-gpio-trigger
+cp /usr/local/mqtt-gpio-trigger/mqtt-gpio-trigger.default /etc/default/mqtt-gpio-trigger
+## Edit /etc/default/mqtt-gpio-trigger and /etc/mqtt-gpio-trigger/mqtt-gpio-trigger.cfg to suit
 /etc/init.d/mqtt-gpio-trigger start
