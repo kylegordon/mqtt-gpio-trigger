@@ -5,8 +5,8 @@ python:
 # command to install dependencies
 #install: "pip install pyowfs --use-mirrors"
 install:
-        - apt-get update
-        - apt-get install git-core
+        - sudo apt-get update
+        - sudo apt-get install git-core
         - git clone git://git.drogon.net/wiringPi wiringPi
         - cd wiringPi
         - ./build
