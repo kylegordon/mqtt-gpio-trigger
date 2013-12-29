@@ -3,6 +3,6 @@ python:
   - "2.7"
   - "3.2"
 # command to install dependencies
-install: "pip install pyowfs --use-mirrors"
+#install: "pip install pyowfs --use-mirrors"
 # command to run tests
 # script: mocktests
