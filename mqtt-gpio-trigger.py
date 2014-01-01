@@ -40,7 +40,7 @@ for item in PINS:
   PINS[PINS.index(item)] = [item,1]
 
 client_id = "GPIO_Trigger_%d" % os.getpid()
-mqttc = mosquitto.Mosquitto(client_id)
+mqttc = mosquitto.Mosquitto(client_id, clean_session=True)
 
 LOGFORMAT = '%(asctime)-15s %(message)s'
 
@@ -52,6 +52,74 @@ else:
 logging.info("Starting mqtt-gpio-trigger")
 logging.info("INFO MODE")
 logging.debug("DEBUG MODE")
+
+## All the MQTT callbacks
+def on_publish(mosq, obj, mid):
+    """
+    What to do when a message is published
+    """
+    logging.debug("MID " + str(mid) + " published.")
+
+def on_subscribe(mosq, obj, mid, qos_list):
+    """
+    What to do in the event of subscribing to a topic"
+    """
+    logging.debug("Subscribe with mid " + str(mid) + " received.")
+
+def on_unsubscribe(mosq, obj, mid):
+    """
+    What to do in the event of unsubscribing from a topic
+    """
+    print("Unsubscribe with mid " + str(mid) + " received.")
+
+def on_message(mosq, obj, msg):
+    print("Message received on topic " + msg.topic + " with QoS " + str(msg.qos) + " and payload " + msg.payload)
+
+def on_connect(mosq, obj, result_code):
+     """
+     Handle connections (or failures) to the broker.
+     This is called after the client has received a CONNACK message from the broker in response to calling connect().
+     The parameter rc is an integer giving the return code:
+
+     0: Success
+     1: Refused – unacceptable protocol version
+     2: Refused – identifier rejected
+     3: Refused – server unavailable
+     4: Refused – bad user name or password (MQTT v3.1 broker only)
+     5: Refused – not authorised (MQTT v3.1 broker only)
+     ## FIXME - needs fleshing out http://mosquitto.org/documentation/python/
+     """
+     logging.debug("on_connect RC: " + str(result_code))
+     if result_code == 0:
+        logging.info("Connected to broker")
+        mqttc.publish("/status/" + socket.getfqdn(), "Online")
+     else:
+        logging.warning("Something went wrong. RC:" + str(result_code))
+        cleanup()
+
+def on_disconnect(mosq, obj, result_code):
+     """
+     Handle disconnections from the broker
+     """
+     if result_code == 0:
+        logging.info("Clean disconnection")
+     else:
+        logging.info("Unexpected disconnection! Reconnecting in 5 seconds")
+        logging.debug("Result code: %s", result_code)
+        mqttc.disconnect()
+        time.sleep(5)
+        connect()
+        main_loop()
+
+def on_message(mosq, obj, msg):
+    """
+    What to do when the client recieves a message from the broker
+    """
+    logging.debug("Received: " + msg.payload + " received on topic " + msg.topic + " with QoS " + str(msg.qos))
+    if msg.topic == "/status" and msg.payload == "status?":
+        mqttc.publish("/status/" + socket.getfqdn(), "Online")
+
+## End of MQTT callbacks
 
 def cleanup(signum, frame):
      """
@@ -68,49 +136,25 @@ def connect():
     """
     Connect to the broker, define the callbacks, and subscribe
     """
-    result = mqttc.connect(MQTT_HOST, MQTT_PORT, 60, True)
+    logging.info("Connecting to " + MQTT_HOST + ":" + str(MQTT_PORT))
+    result = mqttc.connect(MQTT_HOST, MQTT_PORT, 60)
+    logging.info("Connect complete")
     if result != 0:
         logging.info("Connection failed with error code %s. Retrying", result)
         time.sleep(10)
         connect()
+    else:
+        logging.info("Connected to " + MQTT_HOST + ":" + str(MQTT_PORT))
 
     #define the callbacks
-    mqttc.on_message = on_message
     mqttc.on_connect = on_connect
     mqttc.on_disconnect = on_disconnect
+    mqttc.on_publish = on_publish
+    mqttc.on_subscribe = on_subscribe
+    mqttc.on_unsubscribe = on_unsubscribe
+    mqttc.on_message = on_message
 
-    mqttc.subscribe(MQTT_TOPIC, 2)
-
-def on_connect(mosq, obj, result_code):
-     """
-     Handle connections (or failures) to the broker.
-     """
-     ## FIXME - needs fleshing out http://mosquitto.org/documentation/python/
-     if result_code == 0:
-        logging.info("Connected to broker")
-        mqttc.publish("/status/" + socket.getfqdn(), "Online")
-     else:
-        logging.warning("Something went wrong")
-        cleanup()
-
-def on_disconnect(mosq, obj, result_code):
-     """
-     Handle disconnections from the broker
-     """
-     if result_code == 0:
-        logging.info("Clean disconnection")
-     else:
-        logging.info("Unexpected disconnection! Reconnecting in 5 seconds")
-        logging.debug("Result code: %s", result_code)
-        time.sleep(5)
-        connect()
-        main_loop()
-
-def on_message(mosq, obj, msg):
-    """
-    What to do when the client recieves a message from the broker
-    """
-    logging.debug("Received: %s", msg.topic)
+    #mqttc.subscribe(MQTT_TOPIC, 2)
 
 def export_pi_gpio():
     """
@@ -140,7 +184,18 @@ def main_loop():
     """
     The main loop in which we stay connected to the broker
     """
-    while mqttc.loop() == 0:
+    looprc = 0
+    #while mqttc.loop() == 0:
+    while looprc == 0:
+        logging.debug("In the loop")
+        #looprc = mqttc.loop_forever()
+        try:
+            logging.debug("Trying MQTT loop")
+            looprc = mqttc.loop()
+        except:
+            logging.debug("Something went wrong")
+            raise SystemExit
+        logging.debug("Loop RC: " + str(looprc))
         for PIN in PINS:
             index = [y[0] for y in PINS].index(PIN[0])
             logging.debug("Reading state of %s from %s", str(PINS[index][0]), str(PINS))
@@ -155,6 +210,7 @@ def main_loop():
                     PINS[index][1] = state
                     mqttc.publish("/raw/" + socket.getfqdn() + "/gpio/" + str(PINS[index][0]), str(state))
         time.sleep(1)
+        logging.debug("End of loop")
 
 # Use the signal module to handle signals
 signal.signal(signal.SIGTERM, cleanup)
