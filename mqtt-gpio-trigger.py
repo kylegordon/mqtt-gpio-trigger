@@ -271,7 +271,6 @@ def main_loop():
                                   + str(PINS[index][0]),
                                   str(state))
         time.sleep(1)
-        logging.debug("End of loop")
 
 # Use the signal module to handle signals
 signal.signal(signal.SIGTERM, cleanup)
