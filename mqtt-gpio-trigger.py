@@ -31,13 +31,13 @@ MQTT_PORT = config.getint("global", "mqtt_port")
 MQTT_TOPIC = config.get("global", "mqtt_topic")
 PINS = config.get("global", "pins").split(",")
 
-# Convert the list of strings to a list of ints. Also strips any whitespace padding
+# Convert the list of strings to a list of ints.
+# Also strips any whitespace padding
 PINS = map(int, PINS)
 
 # Append a column to the list of PINS. This will be used to store state
-## FIXME Should this not be in the (re)connect routine?
 for item in PINS:
-  PINS[PINS.index(item)] = [item,1]
+    PINS[PINS.index(item)] = [item, 1]
 
 APPNAME = "mqtt-gpio-trigger"
 PRESENCETOPIC = "clients/" + socket.getfqdn() + "/" + APPNAME + "/state"
@@ -205,7 +205,8 @@ def process_connection():
     What to do when a new connection is established
     """
     logging.debug("Subscribing to %s", MQTT_TOPIC)
-    # If many GPIOs are in use, a topic could be used to request a query of them all
+    # If many GPIOs are in use, a topic could be used
+    # to request a query of them all
 
 
 def export_pi_gpio():
@@ -215,10 +216,13 @@ def export_pi_gpio():
     for PIN in PINS:
         index = [y[0] for y in PINS].index(PIN[0])
         logging.debug("Exporting pin %s", str(PINS[index][0]))
-        result = subprocess.call("/usr/local/bin/gpio export " + str(PINS[index][0]) + " in", shell=True)
+        result = subprocess.call("/usr/local/bin/gpio export "
+                                 + str(PINS[index][0])
+                                 + " in", shell=True)
         if result != 0:
             logging.info("Failed to export pin %s", str(PINS[index][0]))
             sys.exit(result)
+
 
 def set_direction():
     """
@@ -227,10 +231,14 @@ def set_direction():
     for PIN in PINS:
         index = [y[0] for y in PINS].index(PIN[0])
         logging.debug("Setting direction of pin %s", str(PINS[index][0]))
-        result = subprocess.call("echo out > /sys/class/gpio/gpio" + str(PINS[index][0]) + "/direction", shell=True)
+        result = subprocess.call("echo out > /sys/class/gpio/gpio"
+                                 + str(PINS[index][0])
+                                 + "/direction", shell=True)
         if result != 0:
-            logging.info("Failed to set the direction of pin %s", str(PINS[index][0]))
+            logging.info("Failed to set the direction of pin %s",
+                         str(PINS[index][0]))
             sys.exit(result)
+
 
 def main_loop():
     """
@@ -240,17 +248,28 @@ def main_loop():
     while True:
         for PIN in PINS:
             index = [y[0] for y in PINS].index(PIN[0])
-            logging.debug("Reading state of %s from %s", str(PINS[index][0]), str(PINS))
+            logging.debug("Reading state of %s from %s",
+                          str(PINS[index][0]),
+                          str(PINS))
             path = "/sys/class/gpio/gpio" + str(PINS[index][0]) + "/value"
             filehandle = open(path, "r", 0)
             state = filehandle.readline()
             filehandle.close()
             state = int(state)
-            logging.debug("Read state is %s and stored state is %s", str(state), str(PINS[index][1]))
+            logging.debug("Read state is %s and stored state is %s",
+                          str(state),
+                          str(PINS[index][1]))
             if state != PINS[index][1]:
-                    logging.debug("Publishing state change. Pin %s changed from %s to %s", str(PINS[index][0]), str(PINS[index][1]), str(state))
+                    logging.debug("Pin %s changed from %s to %s",
+                                  str(PINS[index][0]),
+                                  str(PINS[index][1]),
+                                  str(state))
                     PINS[index][1] = state
-                    mqttc.publish("/raw/" + socket.getfqdn() + "/gpio/" + str(PINS[index][0]), str(state))
+                    mqttc.publish("/raw/"
+                                  + socket.getfqdn()
+                                  + "/gpio/"
+                                  + str(PINS[index][0]),
+                                  str(state))
         time.sleep(1)
         logging.debug("End of loop")
 
